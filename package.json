@@ -1,0 +1,21 @@
+{
+  "name": "nexusboard",
+  "version": "1.0.0",
+  "description": "A project management backend.",
+  "license": "ISC",
+  "author": "Rahul Nokwal",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "globals": "^17.6.0",
+    "nodemon": "^3.1.14",
+    "prettier": "^3.8.4"
+  }
+}
