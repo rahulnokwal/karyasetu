@@ -10,6 +10,7 @@ import {
 } from "../utils/mail.js";
 import { UserRoleEnum } from "../constant.js";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
 const options = {
   httpOnly: true,
@@ -193,6 +194,43 @@ const changePassword = asyncHandler(async (req, res) => {
   res.status(200).json(new apiResponse(200, "Password changed successfully"));
 });
 
+const verifyEmailAddress = asyncHandler(async (req, res) => {
+  const { verificationToken } = req.params;
+
+  if (!verificationToken) {
+    throw new apiError(400, "Verification token is missing");
+  }
+
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(verificationToken)
+    .digest("hex");
+
+  const user = await User.findOne({
+    emailVerificationToken: hashedToken,
+    emailVerificationTokenExpiry: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    throw new apiError(
+      400,
+      "Email verification token is invalid or has expired"
+    );
+  }
+
+  user.isEmailVerified = true;
+  user.emailVerificationToken = undefined;
+  user.emailVerificationTokenExpiry = undefined;
+
+  await user.save({ validateBeforeSave: false });
+
+  res.status(200).json(
+    new apiResponse(200, "Email verified successfully", {
+      isEmailVerified: true,
+    })
+  );
+});
+
 export {
   registerUser,
   loginUser,
@@ -200,4 +238,5 @@ export {
   refreshAccessToken,
   getCurrentUser,
   changePassword,
+  verifyEmailAddress,
 };

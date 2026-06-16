@@ -12,6 +12,7 @@ import {
   refreshAccessToken,
   getCurrentUser,
   changePassword,
+  verifyEmailAddress,
 } from "../controllers/userAuth.controller.js";
 import userAuth from "../middleware/userAuth.middleware.js";
 
@@ -25,5 +26,5 @@ router.route("/current-user").get(userAuth, getCurrentUser);
 router
   .route("/change-password")
   .post(userAuth, passwordChangeValidation(), validate, changePassword);
-
+router.route("/verify-email/:verificationToken").get(verifyEmailAddress);
 export default router;
