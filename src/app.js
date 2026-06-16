@@ -3,7 +3,6 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
 import helmet from "helmet";
-import apiError from "./utils/apiError.js";
 
 const app = express();
 
@@ -23,14 +22,20 @@ app.use(morgan("dev")); //change
 
 //routes
 import healthcheckRouter from "./routes/healthcheck.routes.js";
+import userAuthRouter from "./routes/userAuth.routes.js";
 app.use("/api/v1/healthcheck", healthcheckRouter);
+app.use("/api/v1/user", userAuthRouter);
 
 //global error handling
-app.use((err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
-  res
-    .status(statusCode)
-    .json(new apiError(statusCode, err.message || "Internal Server Error"));
+app.use((err, req, res, _) => {
+  const statusCode = err.statuscode || 500;
+  const errors = err.errors || [];
+  const message = err.message || "Internal Server Error";
+  res.status(statusCode).json({
+    success: false,
+    statusCode: statusCode,
+    message: message,
+    errors: errors,
+  });
 });
-
 export default app;
