@@ -76,3 +76,14 @@ export const forgetPasswordValidation = () => {
       .normalizeEmail(),
   ];
 };
+
+export const resetPasswordValidation = () => {
+  return [
+    body("newPassword")
+      .trim()
+      .notEmpty()
+      .withMessage("newPassword is required")
+      .isLength({ min: 8, max: 64 })
+      .withMessage("Password must be between 8 and 64 characters"),
+  ];
+};

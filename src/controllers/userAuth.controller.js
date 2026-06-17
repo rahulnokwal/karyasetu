@@ -327,6 +327,31 @@ const sendForgetPasswordMail = asyncHandler(async (req, res) => {
     );
 });
 
+const resetPassword = asyncHandler(async (req, res) => {
+  const { passwordToken } = req.params;
+  const { newPassword } = req.body;
+  if (!passwordToken) throw new apiError(400, "Password token is missing");
+
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(passwordToken)
+    .digest("hex");
+
+  const user = await User.findOne({
+    forgetPasswordToken: hashedToken,
+    forgetPasswordTokenExpiry: { $gt: Date.now() },
+  });
+
+  if (!user) throw new apiError(400, "Invalid password token");
+
+  user.password = newPassword;
+  user.forgetPasswordToken = undefined;
+  user.forgetPasswordTokenExpiry = undefined;
+  await user.save({ validateBeforeSave: false });
+
+  res.status(200).json(new apiResponse(200, "Password reset successfully"));
+});
+
 export {
   registerUser,
   loginUser,
@@ -337,4 +362,5 @@ export {
   verifyEmailAddress,
   resendEmailVerification,
   sendForgetPasswordMail,
+  resetPassword,
 };
