@@ -4,6 +4,7 @@ import {
   userRegisterValidator,
   userLoginValidator,
   passwordChangeValidation,
+  forgetPasswordValidation,
 } from "../validators/index.js";
 import {
   registerUser,
@@ -14,6 +15,7 @@ import {
   changePassword,
   verifyEmailAddress,
   resendEmailVerification,
+  sendForgetPasswordMail,
 } from "../controllers/userAuth.controller.js";
 import userAuth from "../middleware/userAuth.middleware.js";
 
@@ -32,4 +34,7 @@ router
   .route("/resend-email-verification")
   .post(userAuth, resendEmailVerification);
 
+router
+  .route("/forget-password-mail")
+  .post(forgetPasswordValidation(), validate, sendForgetPasswordMail);
 export default router;

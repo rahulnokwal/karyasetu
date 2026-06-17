@@ -7,10 +7,12 @@ import asyncHandler from "../utils/asyncHandler.js";
 import {
   sendEmailToUser,
   emailVerificationMailTemplate,
+  forgetPasswordMailTemplate,
 } from "../utils/mail.js";
 import { UserRoleEnum } from "../constant.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import validate from "../middleware/validator.middleware.js";
 
 const options = {
   httpOnly: true,
@@ -272,7 +274,58 @@ const resendEmailVerification = asyncHandler(async (req, res) => {
     .json(new apiResponse(200, "Verification email sent successfully"));
 });
 
+const sendForgetPasswordMail = asyncHandler(async (req, res) => {
+  const { email } = req.body;
 
+  const user = await User.findOne({ email });
+  if (!user)
+    return res
+      .status(200)
+      .json(
+        new apiResponse(
+          200,
+          "If user exists, a password reset mail has been sent."
+        )
+      );
+
+  if (user.forgetPasswordTokenExpiry) {
+    const twentyFourHours = 24 * 60 * 60 * 1000;
+    const twoMinuteCooldown = 2 * 60 * 1000;
+
+    const freshExpiryTime = Date.now() + twentyFourHours;
+    const cooldownThreshold = freshExpiryTime - twoMinuteCooldown;
+    if (user.forgetPasswordTokenExpiry > cooldownThreshold) {
+      throw new apiError(
+        429,
+        "Please wait 2 minutes before requesting another email."
+      );
+    }
+  }
+
+  const { hashedToken, unhashedToken, tokenExpiry } =
+    await user.generateCryptoToken();
+  user.forgetPasswordToken = hashedToken;
+  user.forgetPasswordTokenExpiry = tokenExpiry;
+  await user.save({ validateBeforeSave: false });
+
+  await sendEmailToUser({
+    email: email,
+    subject: "Reset your password",
+    mail: forgetPasswordMailTemplate(
+      user.fullName,
+      `${process.env.CLIENT_URL}/reset-password?token=${unhashedToken}`
+    ),
+  });
+
+  res
+    .status(200)
+    .json(
+      new apiResponse(
+        200,
+        "If user exists, a password reset mail has been sent."
+      )
+    );
+});
 
 export {
   registerUser,
@@ -283,4 +336,5 @@ export {
   changePassword,
   verifyEmailAddress,
   resendEmailVerification,
+  sendForgetPasswordMail,
 };

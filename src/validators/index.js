@@ -64,3 +64,15 @@ export const passwordChangeValidation = () => {
       }),
   ];
 };
+
+export const forgetPasswordValidation = () => {
+  return [
+    body("email")
+      .trim()
+      .notEmpty()
+      .withMessage("Email is required")
+      .isEmail()
+      .withMessage("Must be a valid email address")
+      .normalizeEmail(),
+  ];
+};
