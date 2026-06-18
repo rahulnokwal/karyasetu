@@ -12,7 +12,7 @@ const userAuth = asyncHandler(async (req, res, next) => {
 
     const decoded_token = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     const user = await User.findById(decoded_token._id).select(
-      "-password -refreshToken -emailVerificationToken -emailVerificationTokenExpiry"
+      "-password -refreshToken -emailVerificationToken -emailVerificationTokenExpiry -profileId"
     );
     if (!user)
       throw new apiError(401, "Unauthorized access: User does not exist");

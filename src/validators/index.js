@@ -1,5 +1,4 @@
 import { body, check } from "express-validator";
-import apiError from "../utils/apiError.js";
 
 export const userRegisterValidator = () => {
   return [

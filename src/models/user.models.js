@@ -32,6 +32,9 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "https://placehold.co/200", // change later
     },
+    profileId: {
+      type: String,
+    },
     isEmailVerified: {
       type: Boolean,
       default: false,

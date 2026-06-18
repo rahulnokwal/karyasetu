@@ -8,7 +8,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const uploadOnCloudinary = async (filePath) => {
+export const uploadOnCloudinary = async (filePath) => {
   try {
     if (!filePath) throw new apiError(404, "file not found");
 
@@ -28,4 +28,16 @@ const uploadOnCloudinary = async (filePath) => {
   }
 };
 
-export default uploadOnCloudinary;
+export const deleteOnCloudinary = async (public_id, resource_type) => {
+  try {
+    if (!public_id) return null;
+
+    const deletedFile = await cloudinary.uploader.destroy(public_id, {
+      resource_type: resource_type,
+    });
+    if (!deletedFile) throw new apiError(500, "Error deleting file");
+    return deletedFile;
+  } catch (error) {
+    throw new apiError(500, error.message || "Error deleting file");
+  }
+};

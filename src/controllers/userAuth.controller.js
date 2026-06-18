@@ -12,8 +12,7 @@ import {
 import { UserRoleEnum } from "../constant.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import validate from "../middleware/validator.middleware.js";
-import uploadOnCloudinary from "../utils/cloudinary.js";
+import { uploadOnCloudinary, deleteOnCloudinary } from "../utils/cloudinary.js";
 
 const options = {
   httpOnly: true,
@@ -109,6 +108,7 @@ const loginUser = asyncHandler(async (req, res) => {
   delete loggedInUser.refreshToken;
   delete loggedInUser.emailVerificationToken;
   delete loggedInUser.emailVerificationTokenExpiry;
+  delete loggedInUser.profileId;
 
   res
     .status(200)
@@ -161,7 +161,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     delete currentUser.refreshToken;
     delete currentUser.emailVerificationToken;
     delete currentUser.emailVerificationTokenExpiry;
-
+    delete currentUser.profileId;
     res
       .status(200)
       .cookie("refreshToken", refreshToken, options)
@@ -358,12 +358,22 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   const file = await uploadOnCloudinary(filePath);
   if (!file) throw new apiError(500, "Error uploading file");
 
+  const currentUser = await User.findById(req.user._id);
+  if (currentUser.profileId) {
+    await deleteOnCloudinary(currentUser.profileId, "image");
+  }
+
   const user = await User.findByIdAndUpdate(
     req.user._id,
-    { $set: { profile: file.url } },
+    {
+      $set: {
+        profile: file.url,
+        profileId: file.public_id,
+      },
+    },
     { new: true }
   ).select(
-    "-password -refreshToken -emailVerificationToken -emailVerificationTokenExpiry"
+    "-password -refreshToken -emailVerificationToken -emailVerificationTokenExpiry -profileId"
   );
 
   res
@@ -396,7 +406,7 @@ const updateUserDetails = asyncHandler(async (req, res) => {
     { $set: updateFields },
     { new: true }
   ).select(
-    "-password -emailVerificationToken -emailVerificationTokenExpiry -refreshToken"
+    "-password -emailVerificationToken -emailVerificationTokenExpiry -refreshToken -profileId"
   );
 
   if (!user)
