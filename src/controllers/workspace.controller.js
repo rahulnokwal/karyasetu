@@ -35,4 +35,33 @@ const createWorkspace = asyncHandler(async (req, res) => {
     .json(new apiResponse(201, "Workspace is created successfully", workspace));
 });
 
-export { createWorkspace };
+const listWorkspaces = asyncHandler(async (req, res) => {
+  const workspaces = WorkspaceMember.aggregate([
+    {
+      $match: {
+        userId: req.user._id,
+      },
+    },
+    {
+      $lookup: {
+        from: "Workspace",
+        localField: "userId",
+        foreignField: "_id",
+        as: "workspaces",
+      },
+    },
+    { $first: "$workspaces" },
+    {
+      $project: {
+        $id: "$workspaces._id",
+        $workspaceName: "$workspaces.workspaceName",
+        $createdBy: "$workspace.createdBy",
+        $role: "$role",
+        $joinedAt: "$joinedAt",
+      },
+    },
+  ]);
+  res.status(200).json(200, "Workspaces fetched successfully", workspaces);
+});
+
+export { createWorkspace, listWorkspaces };
