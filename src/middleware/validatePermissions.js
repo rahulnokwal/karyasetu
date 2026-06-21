@@ -1,6 +1,6 @@
-import asyncHandler from "../utils/asyncHandler";
-import apiError from "../utils/apiError";
-import WorkspaceMember from "../models/workspaceMember.models";
+import asyncHandler from "../utils/asyncHandler.js";
+import apiError from "../utils/apiError.js";
+import WorkspaceMember from "../models/workspaceMember.models.js";
 
 const validatePermissions = (roles = []) => {
   return asyncHandler(async (req, res, next) => {

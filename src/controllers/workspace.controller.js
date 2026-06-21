@@ -64,4 +64,13 @@ const listWorkspaces = asyncHandler(async (req, res) => {
   res.status(200).json(200, "Workspaces fetched successfully", workspaces);
 });
 
-export { createWorkspace, listWorkspaces };
+const deleteWorkspace = asyncHandler(async (req, res) => {
+  const { workspaceId } = req.params;
+  const workspaceDeletion = await Workspace.findByIdAndDelete(workspaceId);
+
+  res
+    .status(200)
+    .json(new apiResponse(200, "Workspace and it data has been deleted"));
+});
+
+export { createWorkspace, listWorkspaces, deleteWorkspace };

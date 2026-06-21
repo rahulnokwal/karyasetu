@@ -18,4 +18,22 @@ const workspaceSchema = new mongoose.Schema(
 
 const Workspace = mongoose.model("Workspace", workspaceSchema);
 
+workspaceSchema.pre("findOneAndDelete", async function (next) {
+  const workspaceId = this.getQuery()._id;
+  const WorkspaceMember = mongoose.model("WorkspaceMember");
+  const Project = mongoose.model("Project");
+  const Task = mongoose.model("Task");
+  const Note = mongoose.model("Note");
+  const AuditLog = mongoose.model("AuditLog");
+
+  await Promise.all([
+    WorkspaceMember.deleteMany({ workspaceId }),
+    Project.deleteMany({ workspaceId }),
+    Task.deleteMany({ workspaceId }),
+    Note.deleteMany({ workspaceId }),
+    AuditLog.deleteMany({ workspaceId }),
+  ]);
+  next();
+});
+
 export default Workspace;
