@@ -73,4 +73,18 @@ const deleteWorkspace = asyncHandler(async (req, res) => {
     .json(new apiResponse(200, "Workspace and it data has been deleted"));
 });
 
-export { createWorkspace, listWorkspaces, deleteWorkspace };
+const renameWorkspace = asyncHandler(async (req, res) => {
+  const { workspaceName } = req.body;
+  const { workspaceId } = req.params;
+
+  const workspace = await Workspace.findByIdAndUpdate(
+    workspaceId,
+    { workspaceName: workspaceName },
+    { new: true }
+  );
+  if (!workspace) throw new apiError(404, "Workspace not found");
+  res
+    .status(200)
+    .json(new apiResponse(200, "workspace renamed successfully", workspace));
+});
+export { createWorkspace, listWorkspaces, deleteWorkspace, renameWorkspace };
