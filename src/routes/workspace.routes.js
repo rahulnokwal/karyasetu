@@ -13,7 +13,7 @@ import {
   leaveWorkspace,
 } from "../controllers/workspace.controller.js";
 import userAuth from "../middleware/userAuth.middleware.js";
-import validatePermissions from "../middleware/validatePermissions.js";
+import { validatePermissions } from "../middleware/validatePermissions.js";
 import { UserRoleEnum, AvailableUserRole } from "../constant.js";
 import validate from "../middleware/validator.middleware.js";
 
