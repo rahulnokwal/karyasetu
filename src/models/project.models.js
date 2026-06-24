@@ -29,4 +29,20 @@ const projectSchema = new mongoose.Schema(
 
 const Project = mongoose.model("Project", projectSchema);
 
+projectSchema.pre("findOneAndDelete", async function (next) {
+  const projectId = this.getQuery()._id;
+
+  const Task = mongoose.model("Task");
+  const Note = mongoose.model("Note");
+  const AuditLog = mongoose.model("AuditLog");
+  const ProjectMember = mongoose.model("ProjectMember");
+
+  await Promise.all([
+    Task.deleteMany({ projectId }),
+    Note.deleteMany({ projectId }),
+    AuditLog.deleteMany({ projectId }),
+    ProjectMember.deleteMany({ projectId }),
+  ]);
+});
+
 export default Project;

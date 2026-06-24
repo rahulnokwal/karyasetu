@@ -127,4 +127,18 @@ const updateProjectDetails = asyncHandler(async (req, res) => {
     );
 });
 
-export { createProject, listProjects, getProjectDetails, updateProjectDetails };
+const deleteProject = asyncHandler(async (req, res) => {
+  const { projectId } = req.params;
+  if (!projectId) throw new apiError(400, "Project Id is missing");
+  const project = await Project.findByIdAndDelete(projectId);
+  if (!project) throw new apiError(404, "Project not found");
+  res.status(200).json(new apiResponse(200, "Project deleted successfully"));
+});
+
+export {
+  createProject,
+  listProjects,
+  getProjectDetails,
+  updateProjectDetails,
+  deleteProject,
+};

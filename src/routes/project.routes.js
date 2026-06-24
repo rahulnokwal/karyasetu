@@ -8,6 +8,7 @@ import {
   listProjects,
   getProjectDetails,
   updateProjectDetails,
+  deleteProject,
 } from "../controllers/project.controller.js";
 import userAuth from "../middleware/userAuth.middleware.js";
 import {
@@ -58,4 +59,11 @@ router
     updateProjectDetails
   );
 
+router
+  .route("/:projectId")
+  .delete(
+    userAuth,
+    validateProjectPermissions([ProjectRoleEnum.PROJECT_ADMIN]),
+    deleteProject
+  );
 export default router;
