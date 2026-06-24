@@ -11,6 +11,8 @@ import {
   deleteProject,
   addProjectMember,
   updateProjectMemberRole,
+  restrictProjectAccess,
+  listProjectMembers,
 } from "../controllers/project.controller.js";
 import userAuth from "../middleware/userAuth.middleware.js";
 import {
@@ -84,4 +86,21 @@ router
     validateProjectPermissions([ProjectRoleEnum.PROJECT_ADMIN]),
     updateProjectMemberRole
   );
+
+router
+  .route("/:projectId/members/:userId")
+  .delete(
+    userAuth,
+    validateProjectPermissions([ProjectRoleEnum.PROJECT_ADMIN]),
+    restrictProjectAccess
+  );
+
+router
+  .route("/:projectId/members")
+  .get(
+    userAuth,
+    validateProjectPermissions(AvailableProjectRoles),
+    listProjectMembers
+  );
+
 export default router;

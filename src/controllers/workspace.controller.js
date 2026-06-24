@@ -187,9 +187,15 @@ const acceptInvitation = asyncHandler(async (req, res) => {
 
 const listWorkspaceMember = asyncHandler(async (req, res) => {
   const { workspaceId } = req.params;
-  const members = await WorkspaceMember.find({
+  let members = await WorkspaceMember.find({
     workspaceId,
-  }).populate("userId", "fullName email profile");
+  })
+    .populate("userId", "fullName email profile")
+    .lean();
+  members = members.map((membership) => ({
+    ...membership.userId,
+    role: membership.role,
+  }));
 
   res
     .status(200)

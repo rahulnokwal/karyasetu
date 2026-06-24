@@ -187,6 +187,64 @@ const updateProjectMemberRole = asyncHandler(async (req, res) => {
     .json(new apiResponse(200, "Project Member role updated", { member }));
 });
 
+const restrictProjectAccess = asyncHandler(async (req, res) => {
+  const { projectId, userId } = req.params;
+  if (!projectId || !userId)
+    throw new apiError(400, "Project Id or User Id is missing");
+
+  const projectMembership = await ProjectMember.findOne({ projectId, userId });
+  if (!projectMembership)
+    throw new apiError(404, "User is not a Project Member");
+
+  if (projectMembership.role === ProjectRoleEnum.PROJECT_ADMIN) {
+    const projectAdminCount = await ProjectMember.countDocuments({
+      projectId,
+      role: ProjectRoleEnum.PROJECT_ADMIN,
+    });
+
+    if (projectAdminCount === 1)
+      throw new apiError(
+        400,
+        "Cannot remove the last Project Admin. Please assign the role of Project Admin to someone else first."
+      );
+  }
+  await ProjectMember.findByIdAndDelete(projectMembership._id);
+
+  res
+    .status(200)
+    .json(new apiResponse(200, "User removed from Project Members"));
+});
+
+const listProjectMembers = asyncHandler(async (req, res) => {
+  const { projectId } = req.params;
+  if (!projectId) throw new apiError(400, "Project Id is missing");
+
+  const projectMembership = await ProjectMember.findOne({
+    projectId,
+    userId: req.user._id,
+  });
+  if (!projectMembership)
+    throw new apiError(404, "User is not all to see Project Member");
+
+  let projectMembers = await ProjectMember.find({ projectId })
+    .populate("userId", "name email profile")
+    .lean();
+  projectMembers = projectMembers.map((membership) => ({
+    ...membership.userId,
+    role: membership.role,
+  }));
+
+  res
+    .status(200)
+    .json(
+      new apiResponse(
+        200,
+        "Project Members fetched successfully",
+        projectMembers
+      )
+    );
+});
+
 export {
   createProject,
   listProjects,
@@ -195,4 +253,6 @@ export {
   deleteProject,
   addProjectMember,
   updateProjectMemberRole,
+  restrictProjectAccess,
+  listProjectMembers,
 };
