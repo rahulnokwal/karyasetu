@@ -25,11 +25,14 @@ import healthcheckRouter from "./routes/healthcheck.routes.js";
 import userAuthRouter from "./routes/userAuth.routes.js";
 import workspaceRouter from "./routes/workspace.routes.js";
 import projectRouter from "./routes/project.routes.js";
+import taskRouter from "./routes/task.routes.js";
 app.use("/api/v1/healthcheck", healthcheckRouter);
 app.use("/api/v1/user", userAuthRouter);
 app.use("/api/v1/workspace", workspaceRouter);
 workspaceRouter.use("/:workspaceId/project", projectRouter);
 app.use("/api/v1/projects", projectRouter);
+projectRouter.use("/:projectId/tasks", taskRouter);
+app.use("/api/v1/tasks", taskRouter);
 
 //global error handling
 app.use((err, req, res, _) => {

@@ -23,16 +23,25 @@ export const uploadProfile = multer({
   },
 });
 
-export const uploadNotes = multer({
+export const uploadTaskNotes = multer({
   storage: storage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowedTextFiles = ["text/plain", "text/markdown"];
+    const allowedTextFiles = [
+      "text/plain",
+      "text/markdown",
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
     if (allowedTextFiles.includes(file.mimetype)) {
       cb(null, true);
     } else {
       cb(
-        new apiError(400, "Only .txt and .md files are allowed for notes."),
+        new apiError(
+          400,
+          "This file type is not allowed for notes. only use txt, md, pdf and doc files."
+        ),
         false
       );
     }

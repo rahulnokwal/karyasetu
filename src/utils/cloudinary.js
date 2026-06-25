@@ -33,11 +33,12 @@ export const deleteOnCloudinary = async (public_id, resource_type) => {
     if (!public_id) return null;
 
     const deletedFile = await cloudinary.uploader.destroy(public_id, {
-      resource_type: resource_type,
+      resource_type: resource_type || "auto",
     });
     if (!deletedFile) throw new apiError(500, "Error deleting file");
     return deletedFile;
   } catch (error) {
-    throw new apiError(500, error.message || "Error deleting file");
+    console.error("Error deleting files", error);
+    return null;
   }
 };

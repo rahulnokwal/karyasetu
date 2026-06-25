@@ -24,7 +24,7 @@ import {
   updateUserDetails,
 } from "../controllers/userAuth.controller.js";
 import userAuth from "../middleware/userAuth.middleware.js";
-import { uploadNotes, uploadProfile } from "../middleware/multer.middleware.js";
+import { uploadProfile } from "../middleware/multer.middleware.js";
 
 const router = Router();
 

@@ -26,9 +26,10 @@ const taskSchema = mongoose.Schema(
     attachments: {
       type: [
         {
-          url: String,
-          mimetype: String,
-          size: Number,
+          url: { type: String, required: true },
+          publicId: { type: String, required: true },
+          mimetype: { type: String, required: true },
+          size: { type: Number, required: true },
         },
       ],
       default: [],

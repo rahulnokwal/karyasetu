@@ -358,9 +358,13 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   const file = await uploadOnCloudinary(filePath);
   if (!file) throw new apiError(500, "Error uploading file");
 
-  const currentUser = await User.findById(req.user._id);
-  if (currentUser.profileId) {
-    await deleteOnCloudinary(currentUser.profileId, "image");
+  try {
+    const currentUser = await User.findById(req.user._id);
+    if (currentUser.profileId) {
+      await deleteOnCloudinary(currentUser.profileId, "image");
+    }
+  } catch (error) {
+    throw new apiError(500, "Error deleting files");
   }
 
   const user = await User.findByIdAndUpdate(

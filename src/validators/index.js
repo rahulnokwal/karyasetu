@@ -165,3 +165,19 @@ export const projectUpdateValidation = () => {
       .withMessage("Project description must be between 3 and 500 characters"),
   ];
 };
+
+export const createTaskValidation = () => {
+  return [
+    body("title")
+      .trim()
+      .notEmpty()
+      .withMessage("title is required")
+      .isLength({ min: 3, max: 100 })
+      .withMessage("Title must be between 3 and 100 characters"),
+    body("description")
+      .optional()
+      .trim()
+      .isLength({ min: 3, max: 500 })
+      .withMessage("Task description must be between 3 and 500 characters"),
+  ];
+};
