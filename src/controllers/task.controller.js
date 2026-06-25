@@ -124,4 +124,65 @@ const getTaskById = asyncHandler(async (req, res) => {
 
   res.status(200).json(new apiResponse(200, "Task fetched successfully", task));
 });
-export { createTask, listProjectTasks, getMyTasks, getTaskById };
+
+const updateTaskInfo = asyncHandler(async (req, res) => {
+  const { projectId, taskId } = req.params;
+  const { title, description } = req.body;
+  if (!projectId || !taskId)
+    throw new apiError(400, "Project Id or Task Id is missing");
+
+  const updateFields = {};
+  if (title) updateFields.title = title;
+  if (description) updateFields.description = description;
+
+  const attachments = [];
+  try {
+    if (req.files) {
+      const uploadFiles = req.files;
+      for (let file of uploadFiles) {
+        const uploadedFile = await uploadOnCloudinary(file.path);
+        attachments.push({
+          url: uploadedFile.url,
+          publicId: uploadedFile.publicId,
+          mimetype: uploadedFile.mimetype,
+          size: uploadedFile.size,
+        });
+      }
+    }
+  } catch (error) {
+    for (let file of attachments) {
+      await deleteOnCloudinary(file.publicId);
+    }
+    throw new apiError(500, "File uploadation fails");
+  }
+  if (Object.keys(updateFields).length == 0 && attachments.length == 0)
+    throw new apiError(400, "No details provided to update");
+
+  const query = { $set: updateFields };
+  if (attachments.length > 0)
+    query.$push = { attachments: { $each: attachments } };
+
+  const updatedTask = await Task.findOneAndUpdate(
+    { _id: taskId, projectId: projectId },
+    query,
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+  if (!updatedTask)
+    throw new apiError(500, "something went wrong while updating task");
+  res
+    .status(200)
+    .json(
+      new apiResponse(200, "Task details updated successfully", updatedTask)
+    );
+});
+
+export {
+  createTask,
+  listProjectTasks,
+  getMyTasks,
+  getTaskById,
+  updateTaskInfo,
+};

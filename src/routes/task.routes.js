@@ -4,8 +4,12 @@ import {
   listProjectTasks,
   getMyTasks,
   getTaskById,
+  updateTaskInfo,
 } from "../controllers/task.controller.js";
-import { createTaskValidation } from "../validators/index.js";
+import {
+  createTaskValidation,
+  updateTaskValidation,
+} from "../validators/index.js";
 import userAuth from "../middleware/userAuth.middleware.js";
 import { validateProjectPermissions } from "../middleware/validatePermissions.js";
 import validate from "../middleware/validator.middleware.js";
@@ -32,6 +36,20 @@ router
     userAuth,
     validateProjectPermissions(AvailableProjectRoles),
     listProjectTasks
+  );
+
+router
+  .route("/:projectId/tasks/:taskId")
+  .patch(
+    userAuth,
+    validateProjectPermissions([
+      ProjectRoleEnum.PROJECT_ADMIN,
+      ProjectRoleEnum.EDITOR,
+    ]),
+    uploadTaskNotes.array("uploadFiles", 3),
+    updateTaskValidation(),
+    validate,
+    updateTaskInfo
   );
 
 router.route("/my-tasks").get(userAuth, getMyTasks);
