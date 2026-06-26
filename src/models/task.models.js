@@ -22,6 +22,7 @@ const taskSchema = mongoose.Schema(
     lexicalOrder: {
       type: String,
       required: true,
+      index: true,
     },
     attachments: {
       type: [

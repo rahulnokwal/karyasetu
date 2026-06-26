@@ -7,6 +7,8 @@ import {
   updateTaskInfo,
   assignTask,
   changeStatus,
+  deleteTask,
+  reorderTask,
 } from "../controllers/task.controller.js";
 import {
   createTaskValidation,
@@ -63,6 +65,28 @@ router
       ProjectRoleEnum.EDITOR,
     ]),
     assignTask
+  );
+
+router
+  .route("/:projectId/tasks/:taskId/delete")
+  .delete(
+    userAuth,
+    validateProjectPermissions([
+      ProjectRoleEnum.PROJECT_ADMIN,
+      ProjectRoleEnum.EDITOR,
+    ]),
+    deleteTask
+  );
+
+router
+  .route("/:projectId/tasks/:taskId/reorder")
+  .patch(
+    userAuth,
+    validateProjectPermissions([
+      ProjectRoleEnum.PROJECT_ADMIN,
+      ProjectRoleEnum.EDITOR,
+    ]),
+    reorderTask
   );
 
 router.route("/my-tasks").get(userAuth, getMyTasks);

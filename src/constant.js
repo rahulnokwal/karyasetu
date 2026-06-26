@@ -13,6 +13,7 @@ export const TaskStatusEnum = {
   IN_PROGRESS: "IN_PROGRESS",
   IN_REVIEW: "IN_REVIEW",
   COMPLETED: "COMPLETED",
+  CANCELLED: "CANCELLED",
 };
 
 export const AvailableTaskStatus = Object.values(TaskStatusEnum);

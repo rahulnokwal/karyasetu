@@ -3,9 +3,15 @@ import apiError from "../utils/apiError.js";
 import apiResponse from "../utils/apiResponse.js";
 import Project from "../models/project.models.js";
 import Task from "../models/task.models.js";
-import { uploadOnCloudinary, deleteOnCloudinary } from "../utils/cloudinary.js";
+import {
+  uploadOnCloudinary,
+  deleteOnCloudinary,
+  deleteBulk,
+} from "../utils/cloudinary.js";
 import ProjectMember from "../models/projectMember.js";
 import { use } from "react";
+import { AvailableTaskStatus, TaskStatusEnum } from "../constant.js";
+import { lexicalOrdering } from "../utils/lexicalOrdering.js";
 
 const createTask = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
@@ -16,12 +22,18 @@ const createTask = asyncHandler(async (req, res) => {
   const project = await Project.findOne({ _id: projectId });
   if (!project) throw new apiError(404, "Project not found");
 
+  const lastTask = await Task.findOne({ projectId, status: "TODO" }).sort({
+    lexicalOrder: -1,
+  });
+  const position = lexicalOrdering.calculatePosition(lastTask?.position, "");
+
   const task = new Task({
     title,
     description,
     projectId,
     workspaceId: project.workspaceId,
     createdBy: req.user._id,
+    lexicalOrder: position,
   });
 
   try {
@@ -62,7 +74,7 @@ const listProjectTasks = asyncHandler(async (req, res) => {
 
   const [tasks, totalDocument] = await Promise.all([
     Task.find({ projectId })
-      .sort({ status: -1 })
+      .sort({ lexicalOrder: 1 })
       .skip(skip)
       .limit(limit)
       .populate("createdBy", "fullName email profile")
@@ -87,6 +99,7 @@ const getMyTasks = asyncHandler(async (req, res) => {
   const tasks = await Task.find({
     assigneeId: req.user._id,
   })
+    .sort({ lexicalOrder: 1 })
     .lean()
     .populate("createdBy", "name email profile")
     .populate("projectId", "name");
@@ -215,7 +228,11 @@ const changeStatus = asyncHandler(async (req, res) => {
   const { taskId } = req.params;
   if (!status) throw new apiError(400, "Status is required");
   if (!taskId) throw new apiError(400, "Task Id is missing");
-
+  if (status === TaskStatusEnum.CANCELLED)
+    throw new apiError(
+      400,
+      "You are not allowed to CANCEL TASK. ask project admin to do so"
+    );
   const task = await Task.findOne({
     _id: taskId,
   });
@@ -235,6 +252,44 @@ const changeStatus = asyncHandler(async (req, res) => {
     .json(new apiResponse(200, "Task Status changed successfully", task));
 });
 
+const deleteTask = asyncHandler(async (req, res) => {
+  const { projectId, taskId } = req.params;
+  if (!projectId || !taskId)
+    throw new apiError(400, "Project Id or Task Id is missing");
+
+  const task = await Task.findOne({ _id: taskId, projectId });
+  if (!task) throw new apiError(404, "Task not found");
+  task.status = TaskStatusEnum.CANCELLED;
+  await task.save();
+  res.status(200).json(new apiResponse(200, "Task has been CANCELLED"));
+});
+
+const reorderTask = asyncHandler(async (req, res) => {
+  const { projectId, taskId } = req.params;
+  const { prevPosition = "", nextPosition = "" } = req.body;
+
+  if (!projectId || !taskId) {
+    throw new apiError(400, "Project ID and Task ID are required");
+  }
+
+  const task = await Task.findOne({ _id: taskId, projectId });
+  if (!task) throw new apiError(404, "Task not found");
+
+  const newPosition = lexicalOrdering.calculatePosition(
+    prevPosition,
+    nextPosition
+  );
+
+  task.lexicalOrder = newPosition;
+  await task.save();
+
+  res.status(200).json(
+    new apiResponse(200, "Task reordered successfully", {
+      position: newPosition,
+    })
+  );
+});
+
 export {
   createTask,
   listProjectTasks,
@@ -243,4 +298,6 @@ export {
   updateTaskInfo,
   assignTask,
   changeStatus,
+  deleteTask,
+  reorderTask,
 };
