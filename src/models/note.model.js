@@ -2,25 +2,17 @@ import mongoose from "mongoose";
 
 const noteSchema = new mongoose.Schema(
   {
-    title: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: 100,
-    },
     content: {
       type: String,
       trim: true,
+      required: true,
+      maxlength: 2000,
     },
-    attachments: {
-      type: [
-        {
-          url: String,
-          mimetype: String,
-          size: Number,
-        },
-      ],
-      default: [],
+    taskId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Task",
+      required: true,
+      index: true,
     },
     projectId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -40,7 +32,6 @@ const noteSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
 const Note = mongoose.model("Note", noteSchema);
 
 export default Note;

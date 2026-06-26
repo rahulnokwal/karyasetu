@@ -196,3 +196,14 @@ export const updateTaskValidation = () => {
       .withMessage("Task description must be between 3 and 500 characters"),
   ];
 };
+
+export const NoteValidation = () => {
+  return [
+    body("content")
+      .trim()
+      .notEmpty()
+      .withMessage("Content is required")
+      .isLength({ max: 2000 })
+      .withMessage("Content must not exceed 2000 characters"),
+  ];
+};
