@@ -42,3 +42,13 @@ export const deleteOnCloudinary = async (public_id, resource_type) => {
     return null;
   }
 };
+
+export const deleteBulk = async (publicIds = []) => {
+  try {
+    if (publicIds.length <= 0) return null;
+    const deleteFiles = await cloudinary.api.delete_resources(publicIds);
+    if (!deleteFiles) throw new apiError(500, "Cloudinary deletion errror");
+  } catch (error) {
+    console.error("Cloudinary Bulk Delete Error:", error);
+  }
+};

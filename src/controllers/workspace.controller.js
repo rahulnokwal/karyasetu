@@ -6,6 +6,8 @@ import WorkspaceMember from "../models/workspaceMember.models.js";
 import WorkspaceMemberInvitation from "../models/WorkspaceMembershipInvites.js";
 import { UserRoleEnum } from "../constant.js";
 import { sendEmailToUser, invitationMailTemplate } from "../utils/mail.js";
+import { deleteBulk } from "../utils/cloudinary.js";
+import Task from "../models/task.models.js";
 
 const createWorkspace = asyncHandler(async (req, res) => {
   const { workspaceName } = req.body;
@@ -70,6 +72,13 @@ const listWorkspaces = asyncHandler(async (req, res) => {
 
 const deleteWorkspace = asyncHandler(async (req, res) => {
   const { workspaceId } = req.params;
+  if (!workspaceId) throw new apiError(400, "Workspace ID is missing");
+  const workspaceTask = await Task.find({ workspaceId: workspaceId }).lean();
+  const publicIds = workspaceTask.flatMap((task) =>
+    task.attachments.map((file) => file.publicId)
+  );
+  await deleteBulk(publicIds);
+
   const workspaceDeletion = await Workspace.findByIdAndDelete(workspaceId);
 
   res
