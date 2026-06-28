@@ -17,17 +17,23 @@ import userAuth from "../middleware/userAuth.middleware.js";
 import { validatePermissions } from "../middleware/validatePermissions.js";
 import { UserRoleEnum, AvailableUserRole } from "../constant.js";
 import validate from "../middleware/validator.middleware.js";
+import projectRouter from "./project.routes.js";
+import auditLogRouter from "./auditLog.routes.js";
 
 const router = Router();
+
+router.use("/:workspaceId/projects", projectRouter);
+
+router.use("/:workspaceId/activity", auditLogRouter);
+
 router
-  .route("/workspaces")
-  .post(userAuth, workspaceValidation(), validate, createWorkspace);
-router.route("/workspaces").get(userAuth, listWorkspaces);
+  .route("/")
+  .post(userAuth, workspaceValidation(), validate, createWorkspace)
+  .get(userAuth, listWorkspaces);
+
 router
-  .route("/workspaces/:workspaceId")
-  .delete(userAuth, validatePermissions([UserRoleEnum.OWNER]), deleteWorkspace);
-router
-  .route("/workspaces/:workspaceId")
+  .route("/:workspaceId")
+  .delete(userAuth, validatePermissions([UserRoleEnum.OWNER]), deleteWorkspace)
   .patch(
     userAuth,
     validatePermissions([UserRoleEnum.OWNER, UserRoleEnum.ADMIN]),
@@ -37,7 +43,7 @@ router
   );
 
 router
-  .route("/workspaces/:workspaceId/invites")
+  .route("/:workspaceId/invites")
   .post(
     userAuth,
     validatePermissions([UserRoleEnum.OWNER, UserRoleEnum.ADMIN]),
@@ -49,15 +55,20 @@ router
 router.route("/invites-accept/:token").post(userAuth, acceptInvitation);
 
 router
-  .route("/workspaces/:workspaceId/members")
+  .route("/:workspaceId/members")
   .get(userAuth, validatePermissions(AvailableUserRole), listWorkspaceMember);
 
 router
-  .route("/workspaces/:workspaceId/members/:userId")
+  .route("/:workspaceId/members/:userId")
   .patch(
     userAuth,
     validatePermissions([UserRoleEnum.OWNER, UserRoleEnum.ADMIN]),
     modifyMemberRole
+  )
+  .delete(
+    userAuth,
+    validatePermissions([UserRoleEnum.OWNER, UserRoleEnum.ADMIN]),
+    restrictWorkspaceAccess
   );
 
 router
@@ -69,15 +80,7 @@ router
   );
 
 router
-  .route("/workspaces/:workspaceId/members/:userId")
-  .delete(
-    userAuth,
-    validatePermissions([UserRoleEnum.OWNER, UserRoleEnum.ADMIN]),
-    restrictWorkspaceAccess
-  );
-
-router
-  .route("/workspaces/:workspaceId/leave")
+  .route("/:workspaceId/leave")
   .delete(userAuth, validatePermissions(AvailableUserRole), leaveWorkspace);
 
 export default router;

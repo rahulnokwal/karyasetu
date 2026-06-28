@@ -26,8 +26,15 @@ import {
   AvailableProjectRoles,
   ProjectRoleEnum,
 } from "../constant.js";
+import taskRouter from "./task.routes.js";
+import auditLogRouter from "./auditLog.routes.js";
 
 const router = Router({ mergeParams: true });
+
+router.use("/:projectId/tasks", taskRouter);
+
+router.use("/:projectId/activity", auditLogRouter);
+
 router
   .route("/")
   .post(
@@ -36,10 +43,7 @@ router
     projectValidation(),
     validate,
     createProject
-  );
-
-router
-  .route("/")
+  )
   .get(userAuth, validatePermissions(AvailableUserRole), listProjects);
 
 router
@@ -48,10 +52,7 @@ router
     userAuth,
     validateProjectPermissions(AvailableProjectRoles),
     getProjectDetails
-  );
-
-router
-  .route("/:projectId")
+  )
   .patch(
     userAuth,
     validateProjectPermissions([
@@ -61,10 +62,7 @@ router
     projectUpdateValidation(),
     validate,
     updateProjectDetails
-  );
-
-router
-  .route("/:projectId")
+  )
   .delete(
     userAuth,
     validateProjectPermissions([ProjectRoleEnum.PROJECT_ADMIN]),
@@ -77,6 +75,11 @@ router
     userAuth,
     validateProjectPermissions([ProjectRoleEnum.PROJECT_ADMIN]),
     addProjectMember
+  )
+  .get(
+    userAuth,
+    validateProjectPermissions(AvailableProjectRoles),
+    listProjectMembers
   );
 
 router
@@ -85,22 +88,11 @@ router
     userAuth,
     validateProjectPermissions([ProjectRoleEnum.PROJECT_ADMIN]),
     updateProjectMemberRole
-  );
-
-router
-  .route("/:projectId/members/:userId")
+  )
   .delete(
     userAuth,
     validateProjectPermissions([ProjectRoleEnum.PROJECT_ADMIN]),
     restrictProjectAccess
-  );
-
-router
-  .route("/:projectId/members")
-  .get(
-    userAuth,
-    validateProjectPermissions(AvailableProjectRoles),
-    listProjectMembers
   );
 
 export default router;

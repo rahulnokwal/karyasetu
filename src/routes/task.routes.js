@@ -19,9 +19,19 @@ import { validateProjectPermissions } from "../middleware/validatePermissions.js
 import validate from "../middleware/validator.middleware.js";
 import { AvailableProjectRoles, ProjectRoleEnum } from "../constant.js";
 import { uploadTaskNotes } from "../middleware/multer.middleware.js";
-const router = Router();
+import noteRouter from "./note.routes.js";
+import auditLogRouter from "./auditLog.routes.js";
+
+const router = Router({ mergeParams: true });
+
+router.use("/:taskId/notes", noteRouter);
+
+router.use("/:taskId/activity", auditLogRouter);
+
+router.route("/my-tasks").get(userAuth, getMyTasks);
+
 router
-  .route("/:projectId/tasks")
+  .route("/")
   .post(
     userAuth,
     validateProjectPermissions([
@@ -32,10 +42,7 @@ router
     createTaskValidation(),
     validate,
     createTask
-  );
-
-router
-  .route("/:projectId/tasks")
+  )
   .get(
     userAuth,
     validateProjectPermissions(AvailableProjectRoles),
@@ -43,7 +50,8 @@ router
   );
 
 router
-  .route("/:projectId/tasks/:taskId")
+  .route("/:taskId")
+  .get(userAuth, getTaskById)
   .patch(
     userAuth,
     validateProjectPermissions([
@@ -54,21 +62,7 @@ router
     updateTaskValidation(),
     validate,
     updateTaskInfo
-  );
-
-router
-  .route("/:projectId/tasks/:taskId/assign")
-  .patch(
-    userAuth,
-    validateProjectPermissions([
-      ProjectRoleEnum.PROJECT_ADMIN,
-      ProjectRoleEnum.EDITOR,
-    ]),
-    assignTask
-  );
-
-router
-  .route("/:projectId/tasks/:taskId/delete")
+  )
   .delete(
     userAuth,
     validateProjectPermissions([
@@ -79,7 +73,18 @@ router
   );
 
 router
-  .route("/:projectId/tasks/:taskId/reorder")
+  .route("/:taskId/assign")
+  .patch(
+    userAuth,
+    validateProjectPermissions([
+      ProjectRoleEnum.PROJECT_ADMIN,
+      ProjectRoleEnum.EDITOR,
+    ]),
+    assignTask
+  );
+
+router
+  .route("/:taskId/reorder")
   .patch(
     userAuth,
     validateProjectPermissions([
@@ -89,10 +94,6 @@ router
     reorderTask
   );
 
-router.route("/my-tasks").get(userAuth, getMyTasks);
-
 router.route("/:taskId/status").patch(userAuth, changeStatus);
-
-router.route("/:taskId").get(userAuth, getTaskById);
 
 export default router;

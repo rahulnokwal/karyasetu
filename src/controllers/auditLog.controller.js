@@ -22,7 +22,7 @@ const getTaskActivity = asyncHandler(async (req, res) => {
       "Your are not a Project Member so, not allowed to see Task Logs."
     );
 
-  const AuditLogs = await AuditLog.find({
+  const auditLogs = await AuditLog.find({
     taskId,
     projectId: task.projectId,
   })
@@ -32,7 +32,71 @@ const getTaskActivity = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .json(new apiResponse(200, "Logs fetched successfully", AuditLog));
+    .json(new apiResponse(200, "Logs fetched successfully", auditLogs));
 });
 
-export { getTaskActivity };
+const getProjectActivity = asyncHandler(async (req, res) => {
+  const { projectId } = req.params;
+
+  const page = Math.max(1, parseInt(req.query.page) || 1);
+  const limit = Math.max(1, parseInt(req.query.limit) || 20);
+  const skip = (page - 1) * limit;
+
+  const [auditLogs, totalDocument] = await Promise.all([
+    AuditLog.find({
+      projectId,
+    })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean()
+      .populate("performedBy", "fullName email profile"),
+    AuditLog.countDocuments({ projectId }),
+  ]);
+
+  const totalPage = Math.ceil(totalDocument / limit);
+
+  res.status(200).json(
+    new apiResponse(200, "Project AuditLog fetched successfully", {
+      auditLogs,
+      totalDocument,
+      totalPage,
+      currentPage: page,
+      hasNextPage: page < totalPage,
+    })
+  );
+});
+
+const getWorkspaceActivity = asyncHandler(async (req, res) => {
+  const { workspaceId } = req.params;
+
+  const page = Math.max(1, parseInt(req.query.page) || 1);
+  const limit = Math.max(1, parseInt(req.query.limit) || 20);
+  const skip = (page - 1) * limit;
+
+  const [auditLogs, totalDocument] = await Promise.all([
+    AuditLog.find({
+      workspaceId,
+    })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean()
+      .populate("performedBy", "fullName email profile"),
+    AuditLog.countDocuments({ workspaceId }),
+  ]);
+
+  const totalPage = Math.ceil(totalDocument / limit);
+
+  res.status(200).json(
+    new apiResponse(200, "Workspace AuditLog fetched successfully", {
+      auditLogs,
+      totalDocument,
+      totalPage,
+      currentPage: page,
+      hasNextPage: page < totalPage,
+    })
+  );
+});
+
+export { getTaskActivity, getProjectActivity, getWorkspaceActivity };
