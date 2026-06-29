@@ -32,11 +32,13 @@ export const sendEmailToUser = async (options) => {
 
   try {
     await transporter.sendMail(mail);
+    return true;
   } catch (error) {
     console.error(
       "Non-fatal: Failed to send verification email during registration",
       error
     );
+    return false;
   }
 };
 

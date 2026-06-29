@@ -131,7 +131,7 @@ export const workspaceValidation = () => {
       .notEmpty()
       .withMessage("Workspace name is required")
       .isLength({ min: 3, max: 50 })
-      .withMessage("Worksapce name must be between 3 and 50 characters"),
+      .withMessage("Workspace name must be between 3 and 50 characters"),
   ];
 };
 

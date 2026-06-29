@@ -10,6 +10,7 @@ import { sendEmailToUser, invitationMailTemplate } from "../utils/mail.js";
 import { deleteBulk } from "../utils/cloudinary.js";
 import Task from "../models/task.models.js";
 import createAuditLog from "../utils/auditLogService.js";
+import crypto from "crypto";
 
 const createWorkspace = asyncHandler(async (req, res) => {
   const { workspaceName } = req.body;
@@ -51,7 +52,7 @@ const createWorkspace = asyncHandler(async (req, res) => {
 });
 
 const listWorkspaces = asyncHandler(async (req, res) => {
-  const workspaces = WorkspaceMember.aggregate([
+  const workspaces = await WorkspaceMember.aggregate([
     {
       $match: {
         userId: new mongoose.Types.ObjectId(req.user._id),
@@ -60,7 +61,7 @@ const listWorkspaces = asyncHandler(async (req, res) => {
     {
       $lookup: {
         from: "workspaces",
-        localField: "userId",
+        localField: "workspaceId",
         foreignField: "_id",
         as: "workspaces",
       },
@@ -68,16 +69,18 @@ const listWorkspaces = asyncHandler(async (req, res) => {
     { $unwind: "$workspaces" },
     {
       $project: {
-        id: "$workspaces._id",
+        workspaceId: "$workspaces._id",
         workspaceName: "$workspaces.workspaceName",
-        createdBy: "$workspace.createdBy",
-        owner: "$workspace.owner",
+        createdBy: "$workspaces.createdBy",
+        owner: "$workspaces.owner",
         role: "$role",
         joinedAt: "$joinedAt",
       },
     },
   ]);
-  res.status(200).json(200, "Workspaces fetched successfully", workspaces);
+  res
+    .status(200)
+    .json(new apiResponse(200, "Workspaces fetched successfully", workspaces));
 });
 
 const deleteWorkspace = asyncHandler(async (req, res) => {
@@ -87,9 +90,11 @@ const deleteWorkspace = asyncHandler(async (req, res) => {
   const publicIds = workspaceTask.flatMap((task) =>
     task.attachments.map((file) => file.publicId)
   );
-  await deleteBulk(publicIds);
 
-  await Workspace.findByIdAndDelete(workspaceId);
+  await Promise.all([
+    deleteBulk(publicIds),
+    Workspace.findByIdAndDelete(workspaceId),
+  ]);
 
   res
     .status(200)
@@ -126,9 +131,7 @@ const sendWorkspaceInvitation = asyncHandler(async (req, res) => {
   const { email, role } = req.body;
   const { workspaceId } = req.params;
 
-  const workspace = await Workspace.findById({
-    workspaceId,
-  });
+  const workspace = await Workspace.findById(workspaceId);
   if (!workspace) throw new apiError(404, "workspace not found");
 
   const userInvitation = new WorkspaceMemberInvitation({
@@ -164,8 +167,8 @@ const sendWorkspaceInvitation = asyncHandler(async (req, res) => {
   }
 
   const invitedUserData = userInvitation.toObject();
-  delete userInvitation.emailInvitationToken;
-  delete userInvitation.emailInvitationTokenExpiry;
+  delete invitedUserData.emailInvitationToken;
+  delete invitedUserData.emailInvitationTokenExpiry;
   res
     .status(200)
     .json(

@@ -37,11 +37,6 @@ const workspaceMemberInvitationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const WorkspaceMemberInvitation = mongoose.model(
-  "WorkspaceMemberInvitation",
-  workspaceMemberInvitationSchema
-);
-
 workspaceMemberInvitationSchema.methods.generateCryptoToken = () => {
   const unhashedToken = crypto.randomBytes(20).toString("hex");
   const hashedToken = crypto
@@ -52,5 +47,10 @@ workspaceMemberInvitationSchema.methods.generateCryptoToken = () => {
 
   return { unhashedToken, hashedToken, tokenExpiry };
 };
+
+const WorkspaceMemberInvitation = mongoose.model(
+  "WorkspaceMemberInvitation",
+  workspaceMemberInvitationSchema
+);
 
 export default WorkspaceMemberInvitation;
