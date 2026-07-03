@@ -26,16 +26,11 @@ import {
   AvailableProjectRoles,
   ProjectRoleEnum,
 } from "../constant.js";
-import taskRouter from "./task.routes.js";
-import auditLogRouter from "./auditLog.routes.js";
+import { nestedTaskRouter } from "./task.routes.js";
+import { projectActivityRouter } from "./auditLog.routes.js";
 
-const router = Router({ mergeParams: true });
-
-router.use("/:projectId/tasks", taskRouter);
-
-router.use("/:projectId/activity", auditLogRouter);
-
-router
+const nestedProjectRouter = Router({ mergeParams: true });
+nestedProjectRouter
   .route("/")
   .post(
     userAuth,
@@ -46,7 +41,12 @@ router
   )
   .get(userAuth, validatePermissions(AvailableUserRole), listProjects);
 
-router
+const shallowProjectRouter = Router();
+
+shallowProjectRouter.use("/:projectId/tasks", nestedTaskRouter);
+shallowProjectRouter.use("/:projectId/activity", projectActivityRouter);
+
+shallowProjectRouter
   .route("/:projectId")
   .get(
     userAuth,
@@ -69,7 +69,7 @@ router
     deleteProject
   );
 
-router
+shallowProjectRouter
   .route("/:projectId/members")
   .post(
     userAuth,
@@ -82,7 +82,7 @@ router
     listProjectMembers
   );
 
-router
+shallowProjectRouter
   .route("/:projectId/members/:userId")
   .patch(
     userAuth,
@@ -95,4 +95,4 @@ router
     restrictProjectAccess
   );
 
-export default router;
+export { nestedProjectRouter, shallowProjectRouter };

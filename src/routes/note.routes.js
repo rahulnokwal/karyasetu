@@ -1,4 +1,4 @@
-import Router from "express";
+import { Router } from "express";
 import {
   addNote,
   getTaskNotes,
@@ -11,9 +11,8 @@ import { validateProjectPermissions } from "../middleware/validatePermissions.js
 import validate from "../middleware/validator.middleware.js";
 import { AvailableProjectRoles } from "../constant.js";
 
-const router = Router({ mergeParams: true });
-
-router
+const nestedNoteRouter = Router({ mergeParams: true });
+nestedNoteRouter
   .route("/")
   .post(
     userAuth,
@@ -28,9 +27,10 @@ router
     getTaskNotes
   );
 
-router
+const shallowNoteRouter = Router();
+shallowNoteRouter
   .route("/:noteId")
   .delete(userAuth, deleteNote)
   .patch(userAuth, NoteValidation(), validate, updateNote);
 
-export default router;
+export { nestedNoteRouter, shallowNoteRouter };

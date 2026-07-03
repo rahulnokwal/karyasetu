@@ -17,14 +17,14 @@ import userAuth from "../middleware/userAuth.middleware.js";
 import { validatePermissions } from "../middleware/validatePermissions.js";
 import { UserRoleEnum, AvailableUserRole } from "../constant.js";
 import validate from "../middleware/validator.middleware.js";
-import projectRouter from "./project.routes.js";
-import auditLogRouter from "./auditLog.routes.js";
+import { nestedProjectRouter } from "./project.routes.js";
+import { workspaceActivityRouter } from "./auditLog.routes.js";
 
 const router = Router();
 
-router.use("/:workspaceId/projects", projectRouter);
+router.use("/:workspaceId/projects", nestedProjectRouter);
 
-router.use("/:workspaceId/activity", auditLogRouter);
+router.use("/:workspaceId/activity", workspaceActivityRouter);
 
 router
   .route("/")

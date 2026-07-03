@@ -7,12 +7,10 @@ import ProjectMember from "../models/projectMember.js";
 import { TaskStatusEnum } from "../constant.js";
 
 const addNote = asyncHandler(async (req, res) => {
-  const { taskId, projectId } = req.params;
+  const { taskId } = req.params;
   const { content } = req.body;
-  if (!taskId || !projectId)
-    throw new apiError(400, "Task Id or Project Id not found");
 
-  const task = await Task.findOne({ _id: taskId, projectId }).lean();
+  const task = await Task.findById(taskId).lean();
   if (!task) throw new apiError(404, "Task not found");
 
   const note = await Note.create({
@@ -29,31 +27,26 @@ const addNote = asyncHandler(async (req, res) => {
 });
 
 const getTaskNotes = asyncHandler(async (req, res) => {
-  const { projectId, taskId } = req.params;
+  const { taskId } = req.params;
 
   const page = Math.max(1, parseInt(req.query.page) || 1);
   const limit = Math.max(1, parseInt(req.query.limit) || 10);
   const skip = (page - 1) * limit;
-
-  if (!taskId || !projectId)
-    throw new apiError(400, "Task Id or Project Id not found");
-
   const task = await Task.findOne({
     _id: taskId,
-    projectId,
     status: { $ne: TaskStatusEnum.CANCELLED },
   }).lean();
   if (!task) throw new apiError(404, "Task not found or has been cancelled");
 
   const [notes, totalNotes] = await Promise.all([
-    Note.find({ taskId, createdAt: { $lt: Date.now() } })
+    Note.find({ taskId })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
+      .populate("createdBy", "fullName email profile")
       .lean(),
     Note.countDocuments({ taskId }),
   ]);
-
   res.status(200).json(
     new apiResponse(200, "Notes fetched successfully", {
       taskId: taskId,
@@ -68,24 +61,27 @@ const deleteNote = asyncHandler(async (req, res) => {
   const { noteId } = req.params;
   if (!noteId) throw new apiError(400, "Note Id is missing");
 
-  const note = await Note.findOne({ _id: noteId });
+  const note = await Note.findById(noteId);
   if (!note) throw new apiError(404, "Note Id is invalid or does not exist");
-  if (note.createdBy.toString() !== req.user._id.toString())
-    throw new apiError(
-      403,
-      "You are not allowed to delete this note. only note creator can delete it"
-    );
 
   const projectMember = await ProjectMember.findOne({
     projectId: note.projectId,
     userId: req.user._id,
   });
-
-  if (!projectMember)
+  if (!projectMember) {
     throw new apiError(
       403,
       "You are not a Project Member. You cannot delete the note"
     );
+  }
+  const isCreator = note.createdBy.toString() === req.user._id.toString();
+  const isAdmin = ["PROJECT_ADMIN", "OWNER"].includes(projectMember.role);
+  if (!isCreator && !isAdmin) {
+    throw new apiError(
+      403,
+      "You are not allowed to delete this note. Only the creator or an Admin can delete it"
+    );
+  }
 
   await note.deleteOne();
   res.status(200).json(new apiResponse(200, "Note deleted successfully"));

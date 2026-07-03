@@ -19,18 +19,11 @@ import { validateProjectPermissions } from "../middleware/validatePermissions.js
 import validate from "../middleware/validator.middleware.js";
 import { AvailableProjectRoles, ProjectRoleEnum } from "../constant.js";
 import { uploadTaskNotes } from "../middleware/multer.middleware.js";
-import noteRouter from "./note.routes.js";
-import auditLogRouter from "./auditLog.routes.js";
+import { nestedNoteRouter } from "./note.routes.js";
+import { taskActivityRouter } from "./auditLog.routes.js";
 
-const router = Router({ mergeParams: true });
-
-router.use("/:taskId/notes", noteRouter);
-
-router.use("/:taskId/activity", auditLogRouter);
-
-router.route("/my-tasks").get(userAuth, getMyTasks);
-
-router
+const nestedTaskRouter = Router({ mergeParams: true });
+nestedTaskRouter
   .route("/")
   .post(
     userAuth,
@@ -49,7 +42,15 @@ router
     listProjectTasks
   );
 
-router
+const shallowTaskRouter = Router();
+
+shallowTaskRouter.use("/:taskId/notes", nestedNoteRouter);
+
+shallowTaskRouter.use("/:taskId/activity", taskActivityRouter);
+
+shallowTaskRouter.route("/my-tasks").get(userAuth, getMyTasks);
+
+shallowTaskRouter
   .route("/:taskId")
   .get(userAuth, getTaskById)
   .patch(
@@ -72,7 +73,7 @@ router
     deleteTask
   );
 
-router
+shallowTaskRouter
   .route("/:taskId/assign")
   .patch(
     userAuth,
@@ -83,7 +84,7 @@ router
     assignTask
   );
 
-router
+shallowTaskRouter
   .route("/:taskId/reorder")
   .patch(
     userAuth,
@@ -94,6 +95,6 @@ router
     reorderTask
   );
 
-router.route("/:taskId/status").patch(userAuth, changeStatus);
+shallowTaskRouter.route("/:taskId/status").patch(userAuth, changeStatus);
 
-export default router;
+export { nestedTaskRouter, shallowTaskRouter };

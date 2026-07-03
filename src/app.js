@@ -24,16 +24,16 @@ app.use(morgan("dev")); //change
 import healthcheckRouter from "./routes/healthcheck.routes.js";
 import userAuthRouter from "./routes/userAuth.routes.js";
 import workspaceRouter from "./routes/workspace.routes.js";
-import projectRouter from "./routes/project.routes.js";
-import taskRouter from "./routes/task.routes.js";
-import noteRouter from "./routes/note.routes.js";
+import { shallowProjectRouter } from "./routes/project.routes.js";
+import { shallowTaskRouter } from "./routes/task.routes.js";
+import { shallowNoteRouter } from "./routes/note.routes.js";
 
 app.use("/api/v1/healthcheck", healthcheckRouter);
 app.use("/api/v1/users", userAuthRouter);
 app.use("/api/v1/workspaces", workspaceRouter);
-app.use("/api/v1/projects", projectRouter);
-app.use("/api/v1/tasks", taskRouter);
-app.use("/api/v1/notes", noteRouter);
+app.use("/api/v1/projects", shallowProjectRouter);
+app.use("/api/v1/tasks", shallowTaskRouter);
+app.use("/api/v1/notes", shallowNoteRouter);
 
 //global error handling
 app.use((err, req, res, _) => {

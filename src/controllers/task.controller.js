@@ -40,9 +40,9 @@ const createTask = asyncHandler(async (req, res) => {
         const uploadedFile = await uploadOnCloudinary(file.path);
         task.attachments.push({
           url: uploadedFile.url,
-          publicId: uploadedFile.publicId,
-          mimetype: uploadedFile.mimetype,
-          size: uploadedFile.size,
+          publicId: uploadedFile.public_id,
+          mimetype: uploadedFile.format,
+          size: uploadedFile.bytes,
         });
       }
     }
@@ -127,35 +127,24 @@ const getTaskById = asyncHandler(async (req, res) => {
   const { taskId } = req.params;
   if (!taskId) throw new apiError(400, "Task Id is missing");
 
-  const task = await Task.findOne({
-    _id: taskId,
-  })
+  const task = await Task.findById(taskId)
     .lean()
     .populate("createdBy", "name email profile")
     .populate("projectId", "name");
 
   if (!task) throw new apiError(404, "Task not found");
 
-  const projectMember = ProjectMember.findOne({
-    userId: req.user._id,
-    projectId: task.projectId,
-  });
-  if (!projectMember)
-    throw new apiError(403, "You are not allowed to view task");
-
   res.status(200).json(new apiResponse(200, "Task fetched successfully", task));
 });
 
 const updateTaskInfo = asyncHandler(async (req, res) => {
-  const { projectId, taskId } = req.params;
-  const { title, description } = req.body;
-  if (!projectId || !taskId)
-    throw new apiError(400, "Project Id or Task Id is missing");
+  const { taskId } = req.params;
+  const title = req.body?.title;
+  const description = req.body?.description;
 
-  const oldTask = await Task.findOne({
-    _id: taskId,
-    projectId,
-  }).lean();
+  if (!taskId) throw new apiError(400, "Task Id is missing");
+
+  const oldTask = await Task.findById(taskId).lean();
   if (!oldTask) throw new apiError(404, "Task not found");
 
   const updateFields = {};
@@ -178,9 +167,9 @@ const updateTaskInfo = asyncHandler(async (req, res) => {
         const uploadedFile = await uploadOnCloudinary(file.path);
         attachments.push({
           url: uploadedFile.url,
-          publicId: uploadedFile.publicId,
-          mimetype: uploadedFile.mimetype,
-          size: uploadedFile.size,
+          publicId: uploadedFile.public_id,
+          mimetype: uploadedFile.format,
+          size: uploadedFile.bytes,
         });
       }
       auditChanges.attachments = {
@@ -204,6 +193,7 @@ const updateTaskInfo = asyncHandler(async (req, res) => {
     new: true,
     runValidators: true,
   });
+
   if (!updatedTask)
     throw new apiError(500, "something went wrong while updating task");
 
@@ -263,9 +253,7 @@ const changeStatus = asyncHandler(async (req, res) => {
       400,
       "You are not allowed to CANCEL TASK. ask project owner or admin to do so"
     );
-  const task = await Task.findOne({
-    _id: taskId,
-  });
+  const task = await Task.findById(taskId);
   if (!task) throw new apiError(404, "Task not found");
   if (!task.assigneeId)
     throw new apiError(
@@ -273,7 +261,7 @@ const changeStatus = asyncHandler(async (req, res) => {
       "Task is not assigned to anyone. to change the status you must assign task to user first"
     );
   if (task.assigneeId.toString() !== req.user._id.toString())
-    throw new apiError(403, "You are not authorized to changed Task Status");
+    throw new apiError(403, "You are not authorized to change Task Status");
 
   const oldStatus = task.status;
   task.status = status;
@@ -294,12 +282,13 @@ const changeStatus = asyncHandler(async (req, res) => {
 });
 
 const deleteTask = asyncHandler(async (req, res) => {
-  const { projectId, taskId } = req.params;
-  if (!projectId || !taskId)
-    throw new apiError(400, "Project Id or Task Id is missing");
+  const { taskId } = req.params;
 
-  const task = await Task.findOne({ _id: taskId, projectId });
+  if (!taskId) throw new apiError(400, "Task Id is missing");
+
+  const task = await Task.findById(taskId);
   if (!task) throw new apiError(404, "Task not found");
+
   task.status = TaskStatusEnum.CANCELLED;
   await task.save();
 
@@ -316,14 +305,14 @@ const deleteTask = asyncHandler(async (req, res) => {
 });
 
 const reorderTask = asyncHandler(async (req, res) => {
-  const { projectId, taskId } = req.params;
+  const { taskId } = req.params;
   const { prevPosition = "", nextPosition = "" } = req.body;
 
-  if (!projectId || !taskId) {
-    throw new apiError(400, "Project ID and Task ID are required");
+  if (!taskId) {
+    throw new apiError(400, "Task ID is required");
   }
 
-  const task = await Task.findOne({ _id: taskId, projectId });
+  const task = await Task.findById(taskId);
   if (!task) throw new apiError(404, "Task not found");
 
   const newPosition = lexicalOrdering.calculatePosition(
