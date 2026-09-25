@@ -1,4 +1,4 @@
-export const DB_NAME = "nexusBase";
+export const DB_NAME = "KaryaSetu";
 
 export const UserRoleEnum = {
   OWNER: "OWNER",
