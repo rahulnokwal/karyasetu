@@ -1,0 +1,30 @@
+import React from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuthStore } from "../store/authStore";
+import { Loader2 } from "lucide-react";
+
+export function ProtectedRoute({ children }) {
+  const { isAuthenticated, isLoading } = useAuthStore();
+  const location = useLocation();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-indigo-600">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <Navigate
+        to={`/login?redirect=${encodeURIComponent(
+          location.pathname + location.search,
+        )}`}
+        replace
+      />
+    );
+  }
+
+  return children;
+}

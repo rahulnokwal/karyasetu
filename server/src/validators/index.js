@@ -1,0 +1,224 @@
+import { body, check } from "express-validator";
+
+export const userRegisterValidator = () => {
+  return [
+    body("fullName")
+      .trim()
+      .notEmpty()
+      .withMessage("Full name is required")
+      .isLength({ min: 3, max: 50 })
+      .withMessage("Full name must be between 3 and 50 characters"),
+    body("email")
+      .trim()
+      .notEmpty()
+      .withMessage("Email is required")
+      .isEmail()
+      .withMessage("Must be a valid email address")
+      .normalizeEmail(),
+    body("password")
+      .trim()
+      .notEmpty()
+      .withMessage("Password is required")
+      .isLength({ min: 8, max: 64 })
+      .withMessage("Password must be between 8 and 64 characters"),
+    body("mobileNumber")
+      .optional()
+      .trim()
+      .isMobilePhone()
+      .withMessage("If provided, must be a valid mobile phone number"),
+  ];
+};
+
+export const userLoginValidator = () => {
+  return [
+    body("email")
+      .trim()
+      .notEmpty()
+      .withMessage("Email is required")
+      .isEmail()
+      .withMessage("Must be a valid email address")
+      .normalizeEmail(),
+    body("password").trim().notEmpty().withMessage("Password is required"),
+  ];
+};
+
+export const passwordChangeValidation = () => {
+  return [
+    body("oldPassword")
+      .trim()
+      .notEmpty()
+      .withMessage("oldPassword is required"),
+    body("newPassword")
+      .trim()
+      .notEmpty()
+      .withMessage("newPassword is required")
+      .isLength({ min: 8, max: 64 })
+      .withMessage("Password must be between 8 and 64 characters")
+      .custom((value, { req }) => {
+        if (value === req.body.oldPassword) {
+          throw new Error(
+            "New password must be different from your current password"
+          );
+        }
+        return true;
+      }),
+  ];
+};
+
+export const emailValidation = () => {
+  return [
+    body("email")
+      .trim()
+      .notEmpty()
+      .withMessage("Email is required")
+      .isEmail()
+      .withMessage("Must be a valid email address")
+      .normalizeEmail(),
+  ];
+};
+
+export const resetPasswordValidation = () => {
+  return [
+    body("newPassword")
+      .trim()
+      .notEmpty()
+      .withMessage("newPassword is required")
+      .isLength({ min: 8, max: 64 })
+      .withMessage("Password must be between 8 and 64 characters"),
+  ];
+};
+
+export const updateProfileValidation = () => {
+  return [
+    check("file").custom((value, { req }) => {
+      if (!req.file) {
+        throw new Error("Profile not found");
+      }
+      return true;
+    }),
+  ];
+};
+
+export const userDetailsUpdateValidator = () => {
+  return [
+    body("fullName")
+      .optional()
+      .trim()
+      .notEmpty()
+      .withMessage("Full name is required")
+      .isLength({ min: 3, max: 50 })
+      .withMessage("Full name must be between 3 and 50 characters"),
+    body("email")
+      .optional()
+      .trim()
+      .notEmpty()
+      .withMessage("Email is required")
+      .isEmail()
+      .withMessage("Must be a valid email address")
+      .normalizeEmail(),
+    body("mobileNumber")
+      .optional()
+      .trim()
+      .isMobilePhone()
+      .withMessage("If provided, must be a valid mobile phone number"),
+  ];
+};
+
+export const workspaceValidation = () => {
+  return [
+    body("workspaceName")
+      .trim()
+      .notEmpty()
+      .withMessage("Workspace name is required")
+      .isLength({ min: 3, max: 50 })
+      .withMessage("Workspace name must be between 3 and 50 characters"),
+  ];
+};
+
+export const projectValidation = () => {
+  return [
+    body("name")
+      .trim()
+      .notEmpty()
+      .withMessage("Project name is required")
+      .isLength({ min: 3, max: 50 })
+      .withMessage("Project name must be between 3 and 50 characters"),
+    body("description")
+      .optional()
+      .trim()
+      .isLength({ min: 3, max: 500 })
+      .withMessage("Project description must be between 3 and 500 characters"),
+  ];
+};
+
+export const projectUpdateValidation = () => {
+  return [
+    body("name")
+      .optional()
+      .trim()
+      .isLength({ min: 3, max: 50 })
+      .withMessage("Project name must be between 3 and 50 characters"),
+    body("description")
+      .optional()
+      .trim()
+      .isLength({ min: 3, max: 500 })
+      .withMessage("Project description must be between 3 and 500 characters"),
+  ];
+};
+
+export const createTaskValidation = () => {
+  return [
+    body("title")
+      .trim()
+      .notEmpty()
+      .withMessage("title is required")
+      .isLength({ min: 3, max: 100 })
+      .withMessage("Title must be between 3 and 100 characters"),
+    body("description")
+      .optional()
+      .trim()
+      .isLength({ min: 3, max: 500 })
+      .withMessage("Task description must be between 3 and 500 characters"),
+    body("assigneeId")
+      .optional()
+      .isMongoId()
+      .withMessage("assigneeId must be a valid user id"),
+  ];
+};
+
+export const updateTaskValidation = () => {
+  return [
+    body("title")
+      .optional()
+      .trim()
+      .isLength({ min: 3, max: 100 })
+      .withMessage("Title must be between 3 and 100 characters"),
+    body("description")
+      .optional()
+      .trim()
+      .isLength({ min: 3, max: 500 })
+      .withMessage("Task description must be between 3 and 500 characters"),
+  ];
+};
+
+export const NoteValidation = () => {
+  return [
+    body("content")
+      .trim()
+      .notEmpty()
+      .withMessage("Content is required")
+      .isLength({ max: 2000 })
+      .withMessage("Content must not exceed 2000 characters"),
+  ];
+};
+
+export const aiTaskDraftValidation = () => {
+  return [
+    body("input")
+      .trim()
+      .notEmpty()
+      .withMessage("Task brief is required")
+      .isLength({ min: 10, max: 2000 })
+      .withMessage("Task brief must be between 10 and 2000 characters"),
+  ];
+};
