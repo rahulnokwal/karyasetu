@@ -1,8 +1,8 @@
 import { io } from "socket.io-client";
 
 const SOCKET_URL =
-  import.meta.env.VITE_SOCKET_URL ||
-  (import.meta.env.VITE_API_BASE_URL || "/api/v1").replace(/\/api\/v1\/?$/, "");
+  import.meta.env.SOCKET_URL ||
+  (import.meta.env.API_BASE_URL || "/api/v1").replace(/\/api\/v1\/?$/, "");
 
 let socket = null;
 
