@@ -162,7 +162,6 @@ export function CreateTaskModal({
               size="sm"
               onClick={handleGenerateDraft}
               isLoading={isGeneratingDraft}
-              disabled={aiBrief.trim().length < 10}
             >
               {!isGeneratingDraft && <Sparkles className="w-3.5 h-3.5" />}
               Elaborate with AI

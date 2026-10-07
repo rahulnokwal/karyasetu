@@ -17,7 +17,7 @@ import createAuditLog from "../utils/auditLogService.js";
 
 const options = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "developement",
+  secure: process.env.NODE_ENV === "production",
   sameSite: "strict",
 };
 

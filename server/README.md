@@ -8,6 +8,7 @@ A robust, scalable backend API for a comprehensive project and task management s
 - **Granular Role-Based Access Control (RBAC):** Custom middleware intercepts requests to validate hierarchical permissions (Owner, Admin, Editor, Member) at the Workspace, Project, and Task levels before hitting the controllers.
 - **Lexical Ordering for Kanban:** Uses LexoRank/fractional indexing principles to handle task reordering (`/tasks/:taskId/reorder`) efficiently without cascading database updates.
 - **Comprehensive Audit Logging:** Tracks activity histories across Workspaces, Projects, and Tasks to maintain a clear system of record for all state mutations.
+- **AI Assistance (Gemini):** Project status reports (`GET /projects/:projectId/summary`) and AI task drafting (`POST /projects/:projectId/ai/task-draft`). Both endpoints degrade gracefully — when the AI service is down or unconfigured they return raw metrics / the raw brief with `usedFallback: true` and a `fallbackReason` string instead of failing.
 
 ## 🛠 Tech Stack
 
@@ -17,6 +18,7 @@ A robust, scalable backend API for a comprehensive project and task management s
 - **Authentication:** JWT (Access & Refresh token rotation)
 - **Storage:** Cloudinary (for profile pictures and task attachments)
 - **Email:** Nodemailer (with Mailtrap for testing)
+- **AI:** Google Gemini (`@google/generative-ai`) for project summaries and task drafting
 
 ## ⚙️ Environment Variables
 
@@ -42,6 +44,11 @@ NODE_ENV=YOUR_ENVIRONMENT
 CLOUDINARY_CLOUDNAME=YOUR_CLOUDNAME
 CLOUDINARY_API_KEY=YOUR_API_KEY
 CLOUDINARY_API_SECRET=YOUR_API_SECRET
+
+// gemini (AI summaries + task drafts — optional; routes return raw metrics/brief fallbacks with fallbackReason when unset or invalid)
+// get a key at https://aistudio.google.com/apikey — it must start with "AIza"
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+GEMINI_MODEL=gemini-2.5-flash
 ```
 
 ## 🌐 Base API Path
@@ -116,6 +123,8 @@ _Note: Creation/Listing uses the Workspace parent ID. Updates/Deletions use the 
 | `PATCH`  | `/projects/:projectId/members/:userId` | **[Shallow]** Update member role         | Project `ADMIN`            |
 | `DELETE` | `/projects/:projectId/members/:userId` | **[Shallow]** Remove member from project | Project `ADMIN`            |
 | `GET`    | `/projects/:projectId/activity`        | **[Shallow]** Get project audit logs     | Project Member             |
+| `GET`    | `/projects/:projectId/summary`         | **[Shallow]** AI project status report (tasks breakdown + risks; metrics-only fallback when AI is down) | Project Member (workspace `OWNER`/`ADMIN` allowed) |
+| `POST`   | `/projects/:projectId/ai/task-draft`   | **[Shallow]** AI task draft — send `{ "input": "rough brief (10–2000 chars)" }`, get back `{ draft: { title, description, suggestedAssigneeId, suggestedAssigneeName, rationale }, model, usedFallback }` for review before creating | Project `ADMIN`, `EDITOR`  |
 
 ---
 
