@@ -20,6 +20,7 @@ export const sendEmailToUser = async (options) => {
       user: process.env.MAILTRAP_USERNAME,
       pass: process.env.MAILTRAP_PASSWORD,
     },
+    family: 4,
   });
 
   const mail = {
